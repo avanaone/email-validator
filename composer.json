@@ -1,0 +1,19 @@
+{
+    "name": "dxh30/email-validator",
+    "description": "Validate email from blacklisted email list",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "authors": [
+        {
+            "name": "Didik Hadumi Setiaji",
+            "email": "didik.hadumi@avana.id"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "EmailValidator\\": "src/"
+        }
+    },
+    "require": {}
+}
