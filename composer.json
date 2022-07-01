@@ -1,5 +1,5 @@
 {
-    "name": "dxh30/email-validator",
+    "name": "avana/email-validator",
     "description": "Validate email from blacklisted email list",
     "type": "library",
     "license": "MIT",
