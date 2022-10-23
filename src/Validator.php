@@ -1,73 +1,103 @@
 <?php
 namespace EmailValidator;
+use Exception;
 
 class Validator {
     public static $blacklistedDomains;
-    public static $debounceApiKey;
-    private $rulesets = [
-        'by_email_domain' => 'validateByEmailDomain'
-    ];
-    public static $usedRule = [
-        'by_email_domain'
-    ];
-    private $useDebounce = false;
+    protected $email;
+    protected $username;
+    protected $domain;
+    protected $debounceApiKey;
+    protected $debounceHost = "https://api.debounce.io/v1/";
 
     /* @description
-     * validate email if it is not inside blacklisted domains
+     * Set debounceApiKey
+     * @return string $debounceApiKey 
+     */
+    public function setDebounceApiKey($debounceApiKey) {
+        return $this->debounceApiKey = $debounceApiKey;
+    }
+
+    /* @description
+     * Set debounceHost for Mock API Test 
+     * @return string $debounceHost
+     */
+    public function setDebounceHost($debounceHost) {
+        return $this->debounceHost = $debounceHost;
+    }
+
+    /* @description
+     * Validate email use debounce Integration
+     * @return array $result
+     */
+
+    public function validateDebounce($email = null) {
+        if (!$this->email || !$this->debounceApiKey) throw new Exception("Email and API Key must be set");
+
+        $client = new \GuzzleHttp\Client();
+        $urlDebounce = $this->debounceHost . "?api=" . $this->debounceApiKey . "&email=" . $this->email; 
+        try {
+            $response = $client->request('GET', $urlDebounce, [
+                'headers' => [
+                    'accept' => 'application/json',
+                ],
+            ]);
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+        }
+
+        return $response->getBody();
+    }
+
+    /* @description
+     * Internally validate email by blacklisted domains array
+     * Optional, should use db instead
      * @return boolean
      */
-    public function validate($email) {
-        if ($this->useDebounce) {
-            $urlValidate = "https://api.debounce.io/v1/?api=".self::$debounceApiKey."&email=".$email;
-            $headers = array(
-                'Accept: application/json',
-                'Content-Type: application/json'
-            );
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $urlValidate);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $return = curl_exec($ch);
-            return $return;
+    public function validate($email = null) {
+        $domain = explode('@', $email ? $email : $this->email)[1];
+        return in_array($domain, self::$blacklistedDomains);
+    }
+
+    /* @description
+     * Set Email string
+     * @return void 
+     */
+
+    public function setEmail($email) {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->email = $email;
+            $this->domain = explode('@', $email)[1];
+            $this->username = explode('@', $email)[0];
         } else {
-            $status = 0;
-            foreach(self::$usedRule as $ruleset) {
-                if(($this)->{$this->rulesets[$ruleset]}($email)) {
-                    $status = $status + 1;
-                }
-            }
-
-            $return = json_encode(array(
-                'success' => "$status"
-            ));
-
-            return $return;
+            throw new Exception("The email string is invalid");
         }
     }
 
     /* @description
-     * add rule by key
-     * @return boolean
+     * Get Email string
+     * @return string $email
      */
-
-    public function ruleConfig($arrayOfRule) {
-       return array_push(self::$usedRule, $arrayOfRule); 
+    public function getEmail() {
+        return $this->email;
     }
 
     /* @description
-     * validate email by domain name
-     * @return boolean
+     * Get Domain from Email string
+     * @return string $domain
      */
-    private function validateByEmailDomain($email) {
-        $domain = explode('@', $email)[1];
-        if (in_array($domain, self::$blacklistedDomains)) { 
-            return false;
-        } else {
-            return true;
-        }
+    public function getDomain() {
+        return $this->domain;
     }
 
+    /* @description
+     * Get Username string from Email string
+     * @return string $username
+     */
+    public function getUsername() {
+        return $this->username;
+     }
+     
     /* @description
      * validate email by 3rd party debounce
      * @return boolean
