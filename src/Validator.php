@@ -96,6 +96,15 @@ class Validator {
      */
     public function getUsername() {
         return $this->username;
+     }
+     
+    /* @description
+     * validate email by 3rd party debounce
+     * @return boolean
+     */
+
+    public function useDebounce() {
+        $this->useDebounce = true;
     }
 
     /* @description
