@@ -4,17 +4,24 @@ use Exception;
 
 class Validator {
     public static $blacklistedDomains;
-    protected $email;
-    protected $username;
-    protected $domain;
-    protected $debounceApiKey;
-    protected $debounceHost = "https://api.debounce.io/v1/";
+    protected string $email;
+    protected string $username;
+    protected string $domain;
+    protected string $debounceApiKey;
+    protected array $parameters = [];
+    protected bool $usingParameters;
+    protected string $debounceHost = "https://api.debounce.io/v1/"; // Default using debounce.io
+
+    public function __construct() {
+        $this->usingParameters = false;
+    }
 
     /* @description
      * Set debounceApiKey
      * @return string $debounceApiKey 
      */
     public function setDebounceApiKey($debounceApiKey) {
+        if ($this->usingParameters) $this->parameters['api'] = $debounceApiKey; // Default using debounce.io
         return $this->debounceApiKey = $debounceApiKey;
     }
 
@@ -27,15 +34,28 @@ class Validator {
     }
 
     /* @description
+     * Set parameters for request
+     * @param array $parameters
+     */
+    public function setParameters($parameters) {
+        return $this->parameters[key($parameters)] = $parameters[key($parameters)];
+    }
+
+    public function useParameters() {
+        return $this->usingParameters = true;
+    }
+
+    /* @description
      * Validate email use debounce Integration
      * @return array $result
      */
 
     public function validateDebounce($email = null) {
-        if (!$this->email || !$this->debounceApiKey) throw new Exception("Email and API Key must be set");
-
         $client = new \GuzzleHttp\Client();
-        $urlDebounce = $this->debounceHost . "?api=" . $this->debounceApiKey . "&email=" . $this->email; 
+        $urlDebounce = $this->usingParameters ? 
+            $this->debounceHost . "?".http_build_query($this->parameters) :
+            $this->debounceHost . "?api=" . $this->debounceApiKey . "&email" . $this->email;
+
         try {
             $response = $client->request('GET', $urlDebounce, [
                 'headers' => [
@@ -46,6 +66,7 @@ class Validator {
             $response = $e->getResponse();
         }
 
+        // Return json from 3rd party
         return $response->getBody();
     }
 
@@ -56,7 +77,14 @@ class Validator {
      */
     public function validate($email = null) {
         $domain = explode('@', $email ? $email : $this->email)[1];
-        return in_array($domain, self::$blacklistedDomains);
+        // Check if blacklistedDomains is defined use it instead
+        // if not then use 3rd party for validation
+        
+        if (self::$blacklistedDomains) {
+            return in_array($domain, self::$blacklistedDomains);
+        }
+
+        return $this->validateDebounce();
     }
 
     /* @description
@@ -69,6 +97,7 @@ class Validator {
             $this->email = $email;
             $this->domain = explode('@', $email)[1];
             $this->username = explode('@', $email)[0];
+            if ($this->usingParameters) $this->parameters['email'] = $email;
         } else {
             throw new Exception("The email string is invalid");
         }
