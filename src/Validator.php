@@ -4,13 +4,13 @@ use Exception;
 
 class Validator {
     public static $blacklistedDomains;
-    protected string $email;
-    protected string $username;
-    protected string $domain;
-    protected string $debounceApiKey;
-    protected array $parameters = [];
-    protected bool $usingParameters;
-    protected string $debounceHost = "https://api.debounce.io/v1/"; // Default using debounce.io
+    protected $email;
+    protected $username;
+    protected $domain;
+    protected $debounceApiKey;
+    protected $parameters = [];
+    protected $usingParameters;
+    protected $debounceHost = "https://api.debounce.io/v1/"; // Default using debounce.io
 
     public function __construct() {
         $this->usingParameters = false;
