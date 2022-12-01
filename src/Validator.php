@@ -51,23 +51,17 @@ class Validator {
      */
 
     public function validateDebounce($email = null) {
-        $client = new \GuzzleHttp\Client();
         $urlDebounce = $this->usingParameters ? 
             $this->debounceHost . "?".http_build_query($this->parameters) :
             $this->debounceHost . "?api=" . $this->debounceApiKey . "&email" . $this->email;
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_URL, $urlDebounce);
 
-        try {
-            $response = $client->request('GET', $urlDebounce, [
-                'headers' => [
-                    'accept' => 'application/json',
-                ],
-            ]);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            $response = $e->getResponse();
-        }
-
-        // Return json from 3rd party
-        return $response->getBody();
+        $response = curl_exec($ch);
+        
+        return $response;
     }
 
     /* @description
