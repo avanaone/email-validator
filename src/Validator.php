@@ -53,7 +53,7 @@ class Validator {
     public function validateDebounce($email = null) {
         $urlDebounce = $this->usingParameters ? 
             $this->debounceHost . "?".http_build_query($this->parameters) :
-            $this->debounceHost . "?api=" . $this->debounceApiKey . "&email" . $this->email;
+            $this->debounceHost . "?api=" . $this->debounceApiKey . "&email=" . $this->email;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
