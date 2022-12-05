@@ -4,13 +4,14 @@ use Exception;
 
 class Validator {
     public static $blacklistedDomains;
-    protected $email;
-    protected $username;
-    protected $domain;
-    protected $debounceApiKey;
-    protected $parameters = [];
-    protected $usingParameters;
-    protected $debounceHost = "https://api.debounce.io/v1/"; // Default using debounce.io
+    private $email;
+    private $username;
+    private $domain;
+    private $result;
+    private $debounceApiKey;
+    private $parameters = [];
+    private $usingParameters;
+    private $debounceHost = "https://api.debounce.io/v1/"; // Default using debounce.io
 
     public function __construct() {
         $this->usingParameters = false;
@@ -60,6 +61,8 @@ class Validator {
         curl_setopt($ch, CURLOPT_URL, $urlDebounce);
 
         $response = curl_exec($ch);
+
+        $this->result = $response;
         
         return $response;
     }
@@ -128,6 +131,22 @@ class Validator {
 
     public function useDebounce() {
         $this->useDebounce = true;
+    }
+
+    /* @description
+     * Get Result
+     * @return string
+     */
+    public function getResult() {
+        return $this->result;
+    }
+
+    /* @description
+     * Get Result as JSON
+     * @return array
+     */
+    public function getResultArray() {
+        return json_decode($this->result, true);
     }
 
     /* @description
